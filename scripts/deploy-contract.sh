@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/deploy-contract.sh
-# Build and deploy the IndigoPay Soroban contract.
+# Build and deploy the Stellar-IndigoPay Soroban contract.
 #
 # Usage:
 #   chmod +x scripts/deploy-contract.sh
@@ -13,7 +13,7 @@ IDENTITY=${2:-alice}
 CONTRACT_DIR="$(dirname "$0")/../contracts/indigopay-contract"
 WASM="$CONTRACT_DIR/target/wasm32-unknown-unknown/release/indigopay_contract.wasm"
 
-echo "🌱 Stellar IndigoPay — Contract Deploy"
+echo "✦ Stellar-IndigoPay — Contract Deploy"
 echo "   Network:  $NETWORK"
 echo "   Identity: $IDENTITY"
 echo ""

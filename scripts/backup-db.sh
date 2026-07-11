@@ -10,7 +10,7 @@ set -euo pipefail
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_USER="${DB_USER:-postgres}"
-DB_NAME="${DB_NAME:-indigopay}"
+DB_NAME="${DB_NAME:-stellar_indigopay}"
 DB_PASSWORD="${DB_PASSWORD:-}"
 BACKUP_DIR="${BACKUP_DIR:-/tmp/backups}"
 STORAGE_TYPE="${STORAGE_TYPE:-s3}"  # 's3' or 'gcs'
@@ -22,7 +22,7 @@ RETENTION_DAYS="${RETENTION_DAYS:-30}"
 
 # Timestamp for backup file
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="indigopay_backup_${TIMESTAMP}.sql.gz"
+BACKUP_FILE="stellar_indigopay_backup_${TIMESTAMP}.sql.gz"
 BACKUP_PATH="${BACKUP_DIR}/${BACKUP_FILE}"
 
 # Logging
@@ -77,7 +77,7 @@ esac
 
 # Cleanup old backups locally
 log_info "Cleaning up local backups older than $RETENTION_DAYS days..."
-find "${BACKUP_DIR}" -name "indigopay_backup_*.sql.gz" -mtime "+${RETENTION_DAYS}" -delete
+find "${BACKUP_DIR}" -name "stellar_indigopay_backup_*.sql.gz" -mtime "+${RETENTION_DAYS}" -delete
 log_info "Local backup cleanup completed"
 
 log_info "Database backup and upload completed successfully"

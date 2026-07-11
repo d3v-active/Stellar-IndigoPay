@@ -26,7 +26,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: indigopay
+  name: stellar-indigopay
   namespace: argocd
 spec:
   project: default
@@ -35,7 +35,7 @@ spec:
     targetRevision: HEAD
     path: helm/indigopay
     helm:
-      releaseName: indigopay
+      releaseName: stellar-indigopay
       # Point at a values-prod.yaml checked into git (encrypted with
       # SOPS or rendered from external-secrets). DO NOT commit plaintext
       # production values to the repo.
@@ -43,7 +43,7 @@ spec:
         - values-prod.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: indigopay
+    namespace: stellar-indigopay
   syncPolicy:
     automated:
       prune: true

@@ -36,7 +36,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: backend
-  namespace: indigopay
+  namespace: stellar-indigopay
   labels:
     app: backend
 spec:
@@ -69,7 +69,7 @@ spec:
       labels:
         app: backend
         app.kubernetes.io/component: api
-        app.kubernetes.io/part-of: indigopay
+        app.kubernetes.io/part-of: stellar-indigopay
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "4000"
@@ -78,7 +78,7 @@ spec:
       terminationGracePeriodSeconds: 35
       containers:
         - name: backend
-          image: indigopay/backend:latest
+          image: stellar-indigopay/backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -86,9 +86,9 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: indigopay-config
+                name: stellar-indigopay-config
             - secretRef:
-                name: indigopay-secrets
+                name: stellar-indigopay-secrets
           startupProbe:
             httpGet:
               path: /api/health
@@ -128,7 +128,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: backend-success-rate
-  namespace: indigopay
+  namespace: stellar-indigopay
 spec:
   args:
     - name: service-name
@@ -142,6 +142,6 @@ spec:
         prometheus:
           address: http://prometheus-operated.monitoring.svc:9090
           query: |
-            sum(rate(http_requests_total{job="indigopay-backend",status_code!~"5.."}[2m]))
+            sum(rate(http_requests_total{job="stellar-indigopay-backend",status_code!~"5.."}[2m]))
               /
-            sum(rate(http_requests_total{job="indigopay-backend"}[2m]))
+            sum(rate(http_requests_total{job="stellar-indigopay-backend"}[2m]))

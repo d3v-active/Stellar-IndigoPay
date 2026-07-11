@@ -23,24 +23,24 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: indigopay-secrets
+                  name: stellar-indigopay-secrets
                   key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: indigopay-secrets
+                  name: stellar-indigopay-secrets
                   key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
-                  name: indigopay-secrets
+                  name: stellar-indigopay-secrets
                   key: POSTGRES_DB
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "postgres", "-d", "indigopay"]
+              command: ["pg_isready", "-U", "postgres", "-d", "stellar_indigopay"]
             initialDelaySeconds: 5
             periodSeconds: 5
   volumeClaimTemplates:

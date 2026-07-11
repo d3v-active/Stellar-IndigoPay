@@ -1,7 +1,7 @@
-namespace: indigopay
+namespace: stellar-indigopay
 
 backend:
-  image: indigopay/backend:latest
+  image: stellar-indigopay/backend:latest
   replicas: 2
   port: 4000
   serviceMonitor:
@@ -16,7 +16,7 @@ backend:
       memory: "512Mi"
 
 frontend:
-  image: indigopay/frontend:latest
+  image: stellar-indigopay/frontend:latest
   replicas: 2
   port: 3000
 
@@ -30,20 +30,20 @@ config:
   sorobanRpcUrl: https://soroban-testnet.stellar.org
   contractId: ""
   usdcIssuer: ""
-  emailFrom: "IndigoPay <updates@yourdomain.com>"
+  emailFrom: "Stellar-IndigoPay <updates@yourdomain.com>"
 
 secrets:
   postgresUser: postgres
   # Override this in a gitignored values-prod.yaml or via --set secrets.postgresPassword=...
   # Never commit a real password here. Generate one with: openssl rand -base64 24
   postgresPassword: ""
-  postgresDb: indigopay
+  postgresDb: stellar_indigopay
   resendApiKey: ""
   adminApiKey: ""
   metricsBearerToken: ""
 
 ingress:
-  host: indigopay.local
+  host: stellar-indigopay.local
   className: nginx
 
 # ── Autoscaling (HPA) ──────────────────────────────────────────────

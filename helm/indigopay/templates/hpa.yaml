@@ -1,5 +1,5 @@
 {{- /*
-helm/indigopay/templates/hpa.yaml
+helm/stellar-indigopay/templates/hpa.yaml
 HorizontalPodAutoscaler for the backend. Mirrors k8s/hpa-backend.yaml
 and renders only when autoscaling.enabled is true.
 */ -}}
@@ -7,15 +7,15 @@ and renders only when autoscaling.enabled is true.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "indigopay.backendName" . }}
+  name: {{ include "stellar-indigopay.backendName" . }}
   namespace: {{ .Values.namespace }}
   labels:
-    {{- include "indigopay.labels" . | nindent 4 }}
+    {{- include "stellar-indigopay.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "indigopay.backendName" . }}
+    name: {{ include "stellar-indigopay.backendName" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

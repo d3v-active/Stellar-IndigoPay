@@ -6,7 +6,7 @@ metadata:
   labels:
     app: backend
     app.kubernetes.io/component: api
-    app.kubernetes.io/part-of: indigopay
+    app.kubernetes.io/part-of: stellar-indigopay
 spec:
   replicas: {{ .Values.backend.replicas }}
   selector:
@@ -17,7 +17,7 @@ spec:
       labels:
         app: backend
         app.kubernetes.io/component: api
-        app.kubernetes.io/part-of: indigopay
+        app.kubernetes.io/part-of: stellar-indigopay
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ .Values.backend.port }}"
@@ -36,9 +36,9 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: indigopay-config
+                name: stellar-indigopay-config
             - secretRef:
-                name: indigopay-secrets
+                name: stellar-indigopay-secrets
           startupProbe:
             httpGet:
               path: /api/health
@@ -120,6 +120,6 @@ spec:
       authorization:
         type: Bearer
         credentials:
-          name: indigopay-secrets
+          name: stellar-indigopay-secrets
           key: METRICS_BEARER_TOKEN
 {{- end }}

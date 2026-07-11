@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo ""
-echo "  🌱 Stellar IndigoPay — Dev Setup"
+echo "  ✦ Stellar-IndigoPay — Dev Setup"
 echo "  ─────────────────────────────────"
 echo ""
 

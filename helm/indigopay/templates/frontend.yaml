@@ -21,7 +21,7 @@ spec:
             - containerPort: {{ .Values.frontend.port }}
           envFrom:
             - configMapRef:
-                name: indigopay-config
+                name: stellar-indigopay-config
           readinessProbe:
             httpGet:
               path: /
