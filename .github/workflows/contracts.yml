@@ -9,7 +9,7 @@ on:
     paths: [contracts/**]
   workflow_dispatch:
   schedule:
-    # Nightly deep fuzz run — 1 000 000 iterations every day at 03:00 UTC
+    # Nightly deep fuzz run -- 1 000 000 iterations every day at 03:00 UTC
     - cron: "0 3 * * *"
 
 jobs:
@@ -40,8 +40,8 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --workspace -- -D warnings
 
-      - name: Run tests (skip duplicate fuzz run — handled by dedicated fuzz job)
-        run: cargo test --workspace -- --skip fuzz::
+      - name: Run tests (skip duplicate fuzz run -- handled by dedicated fuzz job)
+        run: "cargo test --workspace -- --skip fuzz::"
 
       - name: Build WASM
         run: cargo build --workspace --target wasm32v1-none --release
@@ -73,7 +73,7 @@ jobs:
           FUZZ_ITERATIONS: 100000
 
   deep-fuzz:
-    name: Deep Fuzz (1M iterations — nightly)
+    name: Deep Fuzz (1M iterations -- nightly)
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
