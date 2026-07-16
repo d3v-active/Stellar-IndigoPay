@@ -1,7 +1,7 @@
 /**
  * pages/dashboard.tsx — Donor impact dashboard
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type KeyboardEvent } from "react";
 import Link from "next/link";
 import WalletConnect from "@/components/WalletConnect";
 import EditProfileForm from "@/components/EditProfileForm";
@@ -29,6 +29,12 @@ import type {
 } from "@/utils/types";
 import { useWishlist } from "@/hooks/useWishlist";
 
+type DashboardTab = "impact" | "saved";
+const DASHBOARD_TABS: { id: DashboardTab; label: string }[] = [
+  { id: "impact", label: "My Impact" },
+  { id: "saved", label: "Saved Projects" },
+];
+
 interface DashboardProps {
   publicKey: string | null;
   onConnect: (pk: string) => void;
@@ -39,7 +45,10 @@ export default function Dashboard({ publicKey, onConnect }: DashboardProps) {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [balance, setBalance] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"impact" | "saved">("impact");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("impact");
+  // Tab refs for keyboard arrow navigation (WAI-ARIA Tabs pattern).
+  const impactTabRef = useRef<HTMLButtonElement>(null);
+  const savedTabRef = useRef<HTMLButtonElement>(null);
   const [savedProjects, setSavedProjects] = useState<ClimateProject[]>([]);
   const [allProjects, setAllProjects] = useState<ClimateProject[]>([]);
   const [isUnfunded, setIsUnfunded] = useState(false);
@@ -157,6 +166,38 @@ export default function Dashboard({ publicKey, onConnect }: DashboardProps) {
         ? { id: p.id, name: p.name }
         : { id: projectId, name: projectId };
     });
+
+  // WAI-ARIA Tabs keyboard pattern: ArrowLeft/Right move between tabs, Home
+  // jumps to the first tab, End jumps to the last.
+  const handleTabKeyDown = (
+    e: KeyboardEvent<HTMLButtonElement>,
+    current: DashboardTab,
+  ) => {
+    const order = DASHBOARD_TABS.map((t) => t.id);
+    const idx = order.indexOf(current);
+    let next: DashboardTab | null = null;
+    switch (e.key) {
+      case "ArrowRight":
+        next = order[(idx + 1) % order.length];
+        break;
+      case "ArrowLeft":
+        next = order[(idx - 1 + order.length) % order.length];
+        break;
+      case "Home":
+        next = order[0];
+        break;
+      case "End":
+        next = order[order.length - 1];
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    setActiveTab(next);
+    // Move focus to the newly-selected tab so screen readers announce it.
+    if (next === "impact") impactTabRef.current?.focus();
+    if (next === "saved") savedTabRef.current?.focus();
+  };
 
   const handlePrintCertificate = () => {
     const el = document.getElementById("impact-certificate");
@@ -347,21 +388,42 @@ export default function Dashboard({ publicKey, onConnect }: DashboardProps) {
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-[rgba(99,102,241,0.10)] dark:border-[rgba(129,140,248,0.12)] mb-6">
+      {/* Tabs (WAI-ARIA Tabs pattern: role=tablist + role=tab + arrow nav) */}
+      <div
+        className="flex border-b border-[rgba(99,102,241,0.10)] dark:border-[rgba(129,140,248,0.12)] mb-6"
+        role="tablist"
+        aria-label="Dashboard sections"
+      >
         <button
+          ref={impactTabRef}
+          role="tab"
+          id="dashboard-tab-impact"
+          aria-selected={activeTab === "impact"}
+          aria-controls="dashboard-tabpanel-impact"
+          tabIndex={activeTab === "impact" ? 0 : -1}
           onClick={() => setActiveTab("impact")}
-          className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 ${activeTab === "impact" ? "border-[#4F46E5] dark:border-[#818CF8] text-[#0F172A] dark:text-[#E2E8F0]" : "border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#4F46E5] dark:hover:text-[#818CF8]"}`}
+          onKeyDown={(e) => handleTabKeyDown(e, "impact")}
+          className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0A0A1A] focus:outline-none ${activeTab === "impact" ? "border-[#4F46E5] dark:border-[#818CF8] text-[#0F172A] dark:text-[#E2E8F0]" : "border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#4F46E5] dark:hover:text-[#818CF8]"}`}
         >
           My Impact
         </button>
         <button
+          ref={savedTabRef}
+          role="tab"
+          id="dashboard-tab-saved"
+          aria-selected={activeTab === "saved"}
+          aria-controls="dashboard-tabpanel-saved"
+          tabIndex={activeTab === "saved" ? 0 : -1}
           onClick={() => setActiveTab("saved")}
-          className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 flex items-center gap-2 ${activeTab === "saved" ? "border-[#4F46E5] dark:border-[#818CF8] text-[#0F172A] dark:text-[#E2E8F0]" : "border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#4F46E5] dark:hover:text-[#818CF8]"}`}
+          onKeyDown={(e) => handleTabKeyDown(e, "saved")}
+          className={`px-6 py-3 text-sm font-semibold transition-all border-b-2 flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0A0A1A] focus:outline-none ${activeTab === "saved" ? "border-[#4F46E5] dark:border-[#818CF8] text-[#0F172A] dark:text-[#E2E8F0]" : "border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#4F46E5] dark:hover:text-[#818CF8]"}`}
         >
           Saved Projects
           {wishlist.length > 0 && (
-            <span className="bg-[rgba(99,102,241,0.08)] dark:bg-[rgba(129,140,248,0.10)] text-[#4F46E5] dark:text-[#818CF8] px-2 py-0.5 rounded-full text-[10px]">
+            <span
+              aria-label={`${wishlist.length} saved`}
+              className="bg-[rgba(99,102,241,0.08)] dark:bg-[rgba(129,140,248,0.10)] text-[#4F46E5] dark:text-[#818CF8] px-2 py-0.5 rounded-full text-[10px]"
+            >
               {wishlist.length}
             </span>
           )}
@@ -369,7 +431,13 @@ export default function Dashboard({ publicKey, onConnect }: DashboardProps) {
       </div>
 
       {activeTab === "impact" ? (
-        <div className="space-y-8 animate-slide-up">
+        <div
+          role="tabpanel"
+          id="dashboard-tabpanel-impact"
+          aria-labelledby="dashboard-tab-impact"
+          tabIndex={0}
+          className="space-y-8 animate-slide-up focus:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0A0A1A]"
+        >
           {/* Certificate */}
           <div className="card">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -557,7 +625,13 @@ export default function Dashboard({ publicKey, onConnect }: DashboardProps) {
           </div>
         </div>
       ) : (
-        <div className="animate-slide-up">
+        <div
+          role="tabpanel"
+          id="dashboard-tabpanel-saved"
+          aria-labelledby="dashboard-tab-saved"
+          tabIndex={0}
+          className="animate-slide-up focus:outline-none focus-visible:ring-2 focus-visible:ring-[#818CF8] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0A0A1A]"
+        >
           {savedProjects.length === 0 ? (
             <div className="card text-center py-20">
               <p className="text-5xl mb-4">❤️</p>

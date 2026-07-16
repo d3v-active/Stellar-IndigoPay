@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createMonthlySubscription,
   loadMonthlySubscriptions,
 } from "@/lib/monthlyGiving";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { formatXLM, timeAgo } from "@/utils/format";
 import type { MonthlySubscription } from "@/utils/types";
 
@@ -33,6 +34,25 @@ export default function MonthlyGivingSetup({
   const [duration, setDuration] = useState("3");
   const [subscriptions, setSubscriptions] = useState<MonthlySubscription[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Trap focus while the dialog is open and Esc closes it (WCAG 2.4.3).
+  useFocusTrap<HTMLDivElement>({
+    active: true,
+    onEscape: onClose,
+    initialFocusRef: closeButtonRef,
+  });
+
+  // Prevent body scroll while the dialog is open and move focus into the
+  // dialog so screen readers announce it.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   useEffect(() => {
     const all = loadMonthlySubscriptions();
@@ -66,15 +86,30 @@ export default function MonthlyGivingSetup({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-xl card bg-white max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="monthly-giving-setup-title"
+        className="w-full max-w-xl card bg-white dark:bg-[#14142D] max-h-[90vh] overflow-y-auto"
+      >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display text-xl font-semibold text-[#0F172A] dark:text-[#E2E8F0]">
+          <h3
+            id="monthly-giving-setup-title"
+            className="font-display text-xl font-semibold text-[#0F172A] dark:text-[#E2E8F0]"
+          >
             Monthly Giving Setup
           </h3>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             className="btn-secondary text-xs py-1.5 px-3"
+            aria-label="Close monthly giving setup"
           >
             Close
           </button>
@@ -128,7 +163,12 @@ export default function MonthlyGivingSetup({
         </div>
 
         {error && (
-          <p className="mt-3 text-sm text-red-600 font-body">{error}</p>
+          <p
+            className="mt-3 text-sm text-red-600 font-body"
+            role="alert"
+          >
+            {error}
+          </p>
         )}
 
         <button
