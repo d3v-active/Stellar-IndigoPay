@@ -60,7 +60,13 @@ mod fuzz {
 
     /// Returns (env, contract_id, client, project_id, token).
     /// Creates one registered project and one XLM token for donations.
-    fn setup() -> (Env, Address, IndigoPayContractClient<'static>, SorobanString, Address) {
+    fn setup() -> (
+        Env,
+        Address,
+        IndigoPayContractClient<'static>,
+        SorobanString,
+        Address,
+    ) {
         let env = Env::default();
         env.mock_all_auths();
 
@@ -89,7 +95,12 @@ mod fuzz {
     }
 
     /// Returns (env, admin, client, project_id).
-    fn setup_with_admin() -> (Env, Address, IndigoPayContractClient<'static>, SorobanString) {
+    fn setup_with_admin() -> (
+        Env,
+        Address,
+        IndigoPayContractClient<'static>,
+        SorobanString,
+    ) {
         let env = Env::default();
         env.mock_all_auths();
 
@@ -116,6 +127,7 @@ mod fuzz {
         co2_per_xlm: u32,
     ) -> (
         Env,
+        Address,
         IndigoPayContractClient<'static>,
         SorobanString,
         Address,
@@ -148,7 +160,30 @@ mod fuzz {
         let oracle_addr = env.register_contract(None, MockOracle);
         client.set_oracle(&admin, &oracle_addr);
 
-        (env, client, project_id, usdc_token)
+        (env, cid, client, project_id, usdc_token)
+    }
+
+    /// Bypass the register_project validation to set co2_per_xlm directly
+    /// in storage. Used by fuzz tests that need extreme co2_per_xlm values
+    /// (e.g. to trigger CO2 calculation overflow) which the contract's
+    /// MAX_CO2_PER_XLM guard would reject at registration time.
+    fn set_project_co2_rate_direct(
+        env: &Env,
+        contract_id: &Address,
+        project_id: &SorobanString,
+        co2_per_xlm: u32,
+    ) {
+        env.as_contract(contract_id, || {
+            let mut project: Project = env
+                .storage()
+                .instance()
+                .get(&DataKey::Project(project_id.clone()))
+                .expect("project should exist");
+            project.co2_per_xlm = co2_per_xlm;
+            env.storage()
+                .instance()
+                .set(&DataKey::Project(project_id.clone()), &project);
+        });
     }
 
     fn fund_usdc(env: &Env, usdc_token: &Address, donor: &Address, amount: i128) {
@@ -389,7 +424,7 @@ mod fuzz {
         fn prop_deactivated_project_cannot_be_paused(
             _dummy in 0..1,
         ) {
-            let (env, admin, client, project_id) = setup_with_admin();
+            let (_env, admin, client, project_id) = setup_with_admin();
 
             client.deactivate_project(&admin, &project_id);
 
@@ -502,7 +537,7 @@ mod fuzz {
         fn prop_co2_rate_bounds_respected(
             new_rate in 1u32..=MAX_CO2_PER_XLM,
         ) {
-            let (env, admin, client, project_id) = setup_with_admin();
+            let (_env, admin, client, project_id) = setup_with_admin();
             client.update_project_co2_rate(&admin, &project_id, &new_rate);
             let project = client.get_project(&project_id);
             prop_assert_eq!(project.co2_per_xlm, new_rate);
@@ -512,7 +547,7 @@ mod fuzz {
         fn prop_zero_co2_rate_rejected(
             _dummy in 0..1,
         ) {
-            let (env, admin, client, project_id) = setup_with_admin();
+            let (_env, admin, client, project_id) = setup_with_admin();
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 client.update_project_co2_rate(&admin, &project_id, &0u32);
             }));
@@ -523,7 +558,7 @@ mod fuzz {
         fn prop_excessive_co2_rate_rejected(
             _dummy in 0..1,
         ) {
-            let (env, admin, client, project_id) = setup_with_admin();
+            let (_env, admin, client, project_id) = setup_with_admin();
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 client.update_project_co2_rate(&admin, &project_id, &(MAX_CO2_PER_XLM + 1));
             }));
@@ -667,7 +702,7 @@ mod fuzz {
         fn prop_veto_before_resolution(
             _dummy in 0..1,
         ) {
-            let (env, admin, client, project_id) = setup_with_admin();
+            let (_env, admin, client, project_id) = setup_with_admin();
             client.create_proposal(&admin, &project_id, &720u32);
             let proposal_before = client.get_proposal(&project_id);
             prop_assert!(!proposal_before.resolved);
@@ -681,7 +716,7 @@ mod fuzz {
         fn prop_proposal_default_duration(
             _dummy in 0..1,
         ) {
-            let (env, admin, client, project_id) = setup_with_admin();
+            let (_env, admin, client, project_id) = setup_with_admin();
             client.create_proposal(&admin, &project_id, &0u32);
             let proposal = client.get_proposal(&project_id);
             prop_assert!(!proposal.resolved);
@@ -750,7 +785,7 @@ mod fuzz {
 
         #[test]
         fn prop_usdc_amount_near_max(usdc_amount in (i128::MAX / 8 + 1)..=i128::MAX) {
-            let (env, client, project_id, usdc_token) = setup_usdc(100u32);
+            let (env, _cid, client, project_id, usdc_token) = setup_usdc(100u32);
             let donor = Address::generate(&env);
             fund_usdc(&env, &usdc_token, &donor, usdc_amount);
 
@@ -762,7 +797,7 @@ mod fuzz {
 
         #[test]
         fn prop_usdc_token_mismatch(amount in 1i128..=100_000_000i128) {
-            let (env, client, project_id, _usdc_token) = setup_usdc(100u32);
+            let (env, _cid, client, project_id, _usdc_token) = setup_usdc(100u32);
             let donor = Address::generate(&env);
             let wrong_token = Address::generate(&env);
 
@@ -814,9 +849,14 @@ mod fuzz {
                 min..=max
             },
         ) {
-            let (env, client, project_id, usdc_token) = setup_usdc(u32::MAX);
+            // Register the project with a valid co2_per_xlm first, then
+            // bypass the validation by setting co2_per_xlm directly in storage.
+            // This lets us trigger CO2 calculation overflow in donate_usdc.
+            let (env, cid, client, project_id, usdc_token) = setup_usdc(100u32);
             let donor = Address::generate(&env);
             fund_usdc(&env, &usdc_token, &donor, usdc_amount);
+
+            set_project_co2_rate_direct(&env, &cid, &project_id, u32::MAX);
 
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 client.donate_usdc(&usdc_token, &donor, &project_id, &usdc_amount, &MSG_HASH);

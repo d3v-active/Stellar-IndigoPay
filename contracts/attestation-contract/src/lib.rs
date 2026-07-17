@@ -31,9 +31,7 @@
  * Build:
  *   cargo build --target wasm32v1-none --release
  */
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, String, Vec,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String, Vec};
 
 // ─── Source chains that this contract understands ───────────────────────────
 //
@@ -178,12 +176,13 @@ impl AttestationContract {
         }
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
-        env.storage().instance().set(&DataKey::NextAttestationId, &0u64);
+        env.storage()
+            .instance()
+            .set(&DataKey::NextAttestationId, &0u64);
         env.storage().instance().set(&DataKey::TotalCount, &0u64);
         env.storage().instance().set(&DataKey::PendingCount, &0u64);
         env.storage().instance().set(&DataKey::Paused, &false);
-        env.events()
-            .publish((symbol_short!("att_init"),), admin);
+        env.events().publish((symbol_short!("att_init"),), admin);
     }
 
     // ─── Configuration ─────────────────────────────────────────────────────
@@ -199,8 +198,7 @@ impl AttestationContract {
             panic!("Relayer already set; clear first");
         }
         env.storage().instance().set(&DataKey::Relayer, &relayer);
-        env.events()
-            .publish((symbol_short!("rl_set"),), relayer);
+        env.events().publish((symbol_short!("rl_set"),), relayer);
     }
 
     /// Admin-only: drop the stored relayer. Used when the relayer key is
@@ -213,8 +211,7 @@ impl AttestationContract {
             panic!("Relayer not configured");
         }
         env.storage().instance().remove(&DataKey::Relayer);
-        env.events()
-            .publish((symbol_short!("rl_clr"),), ());
+        env.events().publish((symbol_short!("rl_clr"),), ());
     }
 
     /// Admin-only: register an allowed source chain. While the allow-list
@@ -367,20 +364,19 @@ impl AttestationContract {
             .instance()
             .get(&DataKey::TotalCount)
             .unwrap_or(0);
-        env.storage()
-            .instance()
-            .set(&DataKey::TotalCount, &total.checked_add(1).expect("total overflow"));
+        env.storage().instance().set(
+            &DataKey::TotalCount,
+            &total.checked_add(1).expect("total overflow"),
+        );
         let pending: u64 = env
             .storage()
             .instance()
             .get(&DataKey::PendingCount)
             .unwrap_or(0);
-        env.storage()
-            .instance()
-            .set(
-                &DataKey::PendingCount,
-                &pending.checked_add(1).expect("pending overflow"),
-            );
+        env.storage().instance().set(
+            &DataKey::PendingCount,
+            &pending.checked_add(1).expect("pending overflow"),
+        );
 
         let donor_key = DataKey::DonorAttestations(donor.clone());
         let mut list: Vec<u64> = env
@@ -473,8 +469,7 @@ impl AttestationContract {
                     .set(&DataKey::PendingCount, &new_pending);
             }
         }
-        env.events()
-            .publish((symbol_short!("att_rvk"), admin), id);
+        env.events().publish((symbol_short!("att_rvk"), admin), id);
     }
 
     // ─── Read endpoints ────────────────────────────────────────────────────
@@ -597,8 +592,10 @@ impl AttestationContract {
         env.storage()
             .instance()
             .set(&DataKey::UpgradeEffectiveAt, &effective_at);
-        env.events()
-            .publish((symbol_short!("upg_prop"), admin), (new_wasm_hash, effective_at));
+        env.events().publish(
+            (symbol_short!("upg_prop"), admin),
+            (new_wasm_hash, effective_at),
+        );
     }
 
     pub fn execute_upgrade(env: Env) {
@@ -640,10 +637,8 @@ impl AttestationContract {
     }
 
     pub fn get_pending_upgrade(env: Env) -> Option<(soroban_sdk::BytesN<32>, u32)> {
-        let hash: Option<soroban_sdk::BytesN<32>> = env
-            .storage()
-            .instance()
-            .get(&DataKey::PendingUpgrade);
+        let hash: Option<soroban_sdk::BytesN<32>> =
+            env.storage().instance().get(&DataKey::PendingUpgrade);
         let effective: Option<u32> = env.storage().instance().get(&DataKey::UpgradeEffectiveAt);
         match (hash, effective) {
             (Some(h), Some(e)) => Some((h, e)),
