@@ -29,12 +29,6 @@ const donationLimiter = createRateLimiter(10, 1); // 10 requests per minute
 // real time without going through Socket.IO.
 const donationEvents = new EventEmitter();
 
-
-// Local EventEmitter used by both the POST /api/donations handler and the
-// GET /api/donations/stream SSE endpoint to broadcast new donations in
-// real time without going through Socket.IO.
-const donationEvents = new EventEmitter();
-
 function validateKey(k) {
   if (!k || !/^G[A-Z0-9]{55}$/.test(k)) {
     const e = new Error("Invalid Stellar public key");
@@ -71,12 +65,6 @@ async function recordDonation(req, res, next) {
   let inTransaction = false;
 
   try {
-    // ── Optional idempotency key ─────────────────────────────────────────────
-    const idempotencyKey = req.headers?.["idempotency-key"] ?? null;
-    if (idempotencyKey !== null) {
-      validateIdempotencyKey(idempotencyKey);
-    }
-
     const {
       projectId,
       donorAddress,
@@ -93,6 +81,8 @@ async function recordDonation(req, res, next) {
     if (!transactionHash || !/^[a-fA-F0-9]{64}$/.test(transactionHash)) {
       throw new AppError("INVALID_TX_HASH");
     }
+
+    client = await pool.connect();
 
     const projectResult = await client.query(
       "SELECT id FROM projects WHERE id = $1",
@@ -472,6 +462,3 @@ router.get("/:id", async (req, res, next) => {
 
 module.exports = router;
 module.exports.recordDonation = recordDonation;
-module.exports.validateIdempotencyKey = validateIdempotencyKey;
-module.exports.lookupIdempotencyKey = lookupIdempotencyKey;
-module.exports.storeIdempotencyKey = storeIdempotencyKey;
