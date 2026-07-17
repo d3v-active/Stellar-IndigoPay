@@ -90,6 +90,21 @@ export default function DonateScreen() {
     loadProjects();
   }, [id]);
 
+  // Scan-to-donate prefill (issue #84): the scan screen passes the amount
+  // and memo parsed from the QR code as route params so the donor lands
+  // here with everything filled in — scan → confirm → done.
+  useEffect(() => {
+    if (prefillAmount) {
+      const parsed = Number.parseFloat(String(prefillAmount));
+      if (Number.isFinite(parsed) && parsed > 0) {
+        setAmount(String(prefillAmount));
+      }
+    }
+    if (prefillMemo) {
+      setMessage(String(prefillMemo).slice(0, 100));
+    }
+  }, [prefillAmount, prefillMemo]);
+
   const loadProjects = async () => {
     setLoading(true);
     setStatusMessage(null);
