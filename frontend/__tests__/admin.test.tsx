@@ -54,6 +54,26 @@ jest.mock("@/lib/api", () => ({
 describe("AdminIndex - Queue Monitoring", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Re-apply resolved values cleared by clearAllMocks
+    mockFetchProjects.mockResolvedValue([]);
+    mockFetchQueues.mockResolvedValue([
+      {
+        queue: "webhook-deliveries",
+        active: 1,
+        waiting: 2,
+        failed: 3,
+        completed: 4,
+        depth: 3,
+        failure_rate: 0.428,
+        latency: 1.5,
+        paused: false,
+      },
+    ]);
+    mockPauseQueue.mockResolvedValue(true);
+    mockResumeQueue.mockResolvedValue(true);
+    mockPurgeQueue.mockResolvedValue(true);
+    mockFetchDeadLetterWebhooks.mockResolvedValue({ data: [], total: 0, page: 1, pageSize: 20 });
+    mockFetchWebhookDeliveries.mockResolvedValue([]);
   });
 
   test("renders wallet connect when not connected", () => {
