@@ -148,7 +148,7 @@ async function findBySource(sourceChain, sourceTxHash) {
  */
 async function findByOnChainId(onChainId) {
   const { rows } = await pool.query(
-    `SELECT * FROM attestations WHERE on_chain_id = $1 LIMIT 1`,
+    "SELECT * FROM attestations WHERE on_chain_id = $1 LIMIT 1",
     [Number(onChainId)],
   );
   return rows[0] || null;
@@ -160,7 +160,7 @@ async function findByOnChainId(onChainId) {
  */
 async function findById(id) {
   const { rows } = await pool.query(
-    `SELECT * FROM attestations WHERE id = $1 LIMIT 1`,
+    "SELECT * FROM attestations WHERE id = $1 LIMIT 1",
     [id],
   );
   return rows[0] || null;
@@ -195,7 +195,7 @@ async function listByDonor(donorAddress, { limit = 50 } = {}) {
  * race in `findBySource` is unaffected because the row pre-existing is
  * still a valid "stop here" outcome.
  */
-async function upsertAttestation(input, opts = {}) {
+async function upsertAttestation(input, _opts = {}) {
   const onChainId = Number.parseInt(input.on_chain_id, 10);
   if (!Number.isFinite(onChainId) || onChainId < 0) {
     throw new Error("Invalid on_chain_id");

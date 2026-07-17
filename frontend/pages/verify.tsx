@@ -19,6 +19,7 @@ import Link from "next/link";
 import {
   fetchAttestationBySource,
   fetchAttestationStats,
+  type AttestationStats,
   type CrossChainAttestation,
 } from "@/lib/api";
 import { shortenAddress } from "@/utils/format";
@@ -33,22 +34,12 @@ export default function VerifyAttestationPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CrossChainAttestation | null>(null);
-  const [stats, setStats] = useState<{
-    total: number;
-    pending: number;
-    verified: number;
-    revoked: number;
-  } | null>(null);
+  const [stats, setStats] = useState<AttestationStats | null>(null);
 
   useEffect(() => {
     fetchAttestationStats()
-      .then((s) =>
-        setStats({
-          total: s.total,
-          pending: s.pending,
-          verified: s.verified,
-          revoked: s.revoked,
-        }),
+      .then((s: AttestationStats) =>
+        setStats(s),
       )
       .catch(() => setStats(null));
   }, []);

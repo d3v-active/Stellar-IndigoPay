@@ -27,6 +27,8 @@ tags:
   - name: Jobs
   - name: Stats
   - name: Admin
+  - name: Attestations
+    description: Cross-chain donation attestation endpoints for verifying bridge transactions across chains.
   - name: RateLimit
     description: All endpoints are subject to rate limiting. See the components/responses/RateLimitExceeded response for headers and 429 response body details.
 security:
@@ -2141,6 +2143,7 @@ paths:
   /api/attestations:
     get:
       tags: [Attestations]
+      operationId: getAttestations
       summary: Get attestation roll-up stats
       description: Returns platform-wide counts (total / pending / verified / revoked) plus per-source-chain breakdown (issue #125).
       security: []
@@ -2158,6 +2161,7 @@ paths:
                     $ref: "#/components/schemas/AttestationStats"
     post:
       tags: [Attestations]
+      operationId: recordAttestation
       summary: Record a new cross-chain attestation
       description: Called by the relayer after source-chain finality. Requires a signed proof in either the `x-attestation-signature` / `x-attestation-timestamp` headers or the legacy `x_proof_signature` / `x_proof_timestamp` aliases.
       security: []
@@ -2209,9 +2213,12 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
   /api/attestations/build-proof:
     post:
       tags: [Attestations]
+      operationId: buildAttestationProof
       summary: Mint a signed proof for a cross-chain observation
       description: Returns `{payload, signature, timestamp, canonical}` so a partner can submit `/api/attestations` with a verifiable header pair.
       security: []
@@ -2230,10 +2237,14 @@ paths:
                 $ref: "#/components/schemas/BuildAttestationProofResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
   /api/attestations/by-source:
     get:
       tags: [Attestations]
+      operationId: getAttestationBySource
       summary: Look up an attestation by source-chain keys
+      description: Look up an attestation using its source-chain identifier and transaction hash.
       security: []
       parameters:
         - name: source_chain
@@ -2265,7 +2276,9 @@ paths:
   /api/attestations/by-donor/{publicKey}:
     get:
       tags: [Attestations]
+      operationId: listAttestationsByDonor
       summary: List every attestation for a Stellar donor
+      description: Retrieve all cross-chain attestations associated with a specific Stellar donor address.
       security: []
       parameters:
         - $ref: "#/components/parameters/PublicKeyParam"
@@ -2295,7 +2308,9 @@ paths:
   /api/attestations/by-id/{onChainId}:
     get:
       tags: [Attestations]
+      operationId: getAttestationByOnChainId
       summary: Look up an attestation by its Soroban on-chain id
+      description: Look up an attestation by its monotonic Soroban on-chain counter.
       security: []
       parameters:
         - name: onChainId
@@ -2323,7 +2338,9 @@ paths:
   /api/attestations/{id}:
     get:
       tags: [Attestations]
+      operationId: getAttestationById
       summary: Get an attestation by backend UUID
+      description: Retrieve a single attestation by its backend UUID identifier.
       security: []
       parameters:
         - name: id
@@ -2351,7 +2368,9 @@ paths:
   /api/attestations/{id}/verify:
     post:
       tags: [Attestations]
+      operationId: verifyAttestation
       summary: Flip a pending attestation to verified
+      description: Mark a pending attestation as verified. Only callable by the relayer after on-chain confirmation.
       security: []
       parameters:
         - name: id
@@ -2374,10 +2393,14 @@ paths:
                     $ref: "#/components/schemas/Attestation"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
   /api/attestations/{id}/revoke:
     post:
       tags: [Attestations]
+      operationId: revokeAttestation
       summary: Revoke an attestation (admin / incident response)
+      description: Revoke an existing attestation. Restricted to admin users only.
       parameters:
         - name: id
           in: path
@@ -2399,3 +2422,5 @@ paths:
                     $ref: "#/components/schemas/Attestation"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimitExceeded"
