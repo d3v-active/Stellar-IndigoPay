@@ -2,17 +2,11 @@
 
 ### Features
 
-* **backend:** multi-provider push notification routing — APNs (iOS), FCM (Android), Expo fallback
-  - New `pushProviders.js` abstraction with `ApnsProvider`, `FcmProvider`, `ExpoProvider` classes and a common `send()` interface
-  - Provider selected by device platform stored in `device_tokens.platform` (already sent by mobile on registration)
-  - Per-provider circuit breakers (`apns_push`, `fcm_push`, `expo_push`) with automatic fallback to Expo Push on OPEN
-  - APNs `410 Unregistered` and FCM `NotRegistered` responses deactivate the stale device token synchronously
-  - New Prometheus metrics: `indigopay_push_sent_total{provider, outcome}` (Counter) and `indigopay_push_latency_seconds{provider}` (Histogram)
-  - New `POST /api/notifications/delivery-callback` endpoint for FCM delivery receipt webhooks (Bearer token auth via `DELIVERY_CALLBACK_SECRET`)
-  - Migration 021 adds `platform` and `provider` columns to `push_notifications`, plus `provider_preference` override column and indexes
-  - 20+ unit tests in `pushProviders.test.js`
-  - New packages: `@parse/node-apn`, `google-auth-library`
-  - See `docs/api.md#push-notification-delivery-callbacks` for callback endpoint reference
+* **frontend:** implement Playwright end-to-end test suite covering critical user journeys (GF-052, closes #110)
+  - Set up Playwright configuration in `playwright.config.ts` with Next.js dev server and Chrome browser projects
+  - Implement mock fixtures for Freighter wallet injection (`freighter.ts`), Horizon API/Soroban RPC responses (`horizon.ts`), and backend REST endpoints (`api.ts`)
+  - Implement E2E specs for (1) browse projects → donate XLM (`donation.spec.ts`), (2) wallet connect → view dashboard (`dashboard.spec.ts`), and (3) admin login → platform analytics (`admin-analytics.spec.ts`)
+  - Set up GitHub Actions CI integration for automated E2E test runs
 
 * **backend,frontend:** JWT refresh token rotation and session management for admin auth (GF-032, closes #87)
   - Access tokens cut to 15 minutes and carry a `jti`; refresh tokens are opaque, DB-backed, and live 7 days
