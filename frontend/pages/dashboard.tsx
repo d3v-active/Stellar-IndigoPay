@@ -95,9 +95,9 @@ export default function Dashboard() {
           setPendingRating(res.data);
         }
       })
-      .catch((err) => {
-        setLoadError(err);
-      })
+      // The pending-rating banner is non-essential: a failure here must not
+      // collapse the whole dashboard into the error fallback.
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [publicKey, wishlist]);
 
@@ -137,9 +137,8 @@ export default function Dashboard() {
           setPendingRating(res.data);
         }
       })
-      .catch((err) => {
-        setLoadError(err);
-      })
+      // The pending-rating banner is non-essential (see initial load above).
+      .catch(() => {})
       .finally(() => {
         setLoading(false);
         setIsRetrying(false);
