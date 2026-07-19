@@ -487,21 +487,21 @@ function buildTimeline(row) {
   const events = [];
   if (row.submitted_at) {
     events.push({
-      type: 'submitted',
+      type: "submitted",
       at: new Date(row.submitted_at).toISOString(),
       details: `Verification request submitted by ${row.organization_name}`,
     });
   }
   if (row.reviewed_at) {
     events.push({
-      type: 'reviewed',
+      type: "reviewed",
       at: new Date(row.reviewed_at).toISOString(),
       details: `Status changed to ${row.status}`,
     });
   }
   if (row.reviewer_notes) {
     events.push({
-      type: 'reviewer_notes',
+      type: "reviewer_notes",
       at: new Date(row.reviewed_at || row.submitted_at).toISOString(),
       details: row.reviewer_notes,
     });
@@ -513,14 +513,14 @@ function buildTimeline(row) {
  * GET /api/verification-requests/:id/public
  * Public endpoint exposing a privacy‑safe subset of verification data.
  */
-router.get('/:id/public', async (req, res, next) => {
+router.get("/:id/public", async (req, res, next) => {
   try {
     const result = await pool.query(
       "SELECT * FROM verification_requests WHERE id = $1",
       [req.params.id],
     );
     const row = result.rows[0];
-    if (!row) throw new AppError('VERIFICATION_NOT_FOUND');
+    if (!row) throw new AppError("VERIFICATION_NOT_FOUND");
 
     const safe = {
       id: row.id,
@@ -531,7 +531,7 @@ router.get('/:id/public', async (req, res, next) => {
       projectCategory: row.project_category,
       projectLocation: row.project_location,
       projectDescription: row.project_description || null,
-      co2PerXLM: row.co2_per_xlm?.toString ? row.co2_per_xlm.toString() : String(row.co2_per_xlm || '0'),
+      co2PerXLM: row.co2_per_xlm?.toString ? row.co2_per_xlm.toString() : String(row.co2_per_xlm || "0"),
       expectedAnnualTonnesCO2: row.expected_annual_tonnes_co2?.toString ? row.expected_annual_tonnes_co2.toString() : (row.expected_annual_tonnes_co2 ? String(row.expected_annual_tonnes_co2) : null),
       supportingDocuments: row.supporting_documents || [],
       storageBackend: row.storage_backend,
